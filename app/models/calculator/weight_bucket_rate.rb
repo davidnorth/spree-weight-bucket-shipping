@@ -10,16 +10,16 @@ class Calculator::WeightBucketRate < Calculator
   end
 
   def compute(line_items)
-    cost = nil
-    weight = Spree::WeightBucketShipping::Config[:unit_multiplier] * line_items.inject(0) { |weight, item| weight + item.quantity * item.variant.weight.to_f }
-
-    # TODO: Add caching to WeightLevel retrieval?
-    WeightLevel.all( :order => "max DESC").each { |weight_level| cost = weight_level.cost if weight < weight_level.max }
-
-    cost
+    return if line_items.empty?
+    weight = Spree::WeightBucketShipping::Config[:unit_multiplier] * line_items.first.order.weight
+    if weight_level = WeightLevel.for_weight(weight)
+      weight_level.cost
+    end
   end
 
   def available?(order)
-    true
+    weight = Spree::WeightBucketShipping::Config[:unit_multiplier] * order.weight
+    !! WeightLevel.for_weight(weight)
   end
+
 end
